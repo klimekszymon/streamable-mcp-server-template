@@ -1,14 +1,18 @@
 # MCP Streamable HTTP Server Template
 
-## What is this about?
+## What is this?
 
-This project exists to build MCP servers by cloning and modifying. It delivers a complete protocol implementation — transport, session, discovery, auth, logging — where every component can be implemented, expanded, or removed. You clone it, strip what you don't need, wire your API client, define tools. Ships dual-runtime (Node.js and Cloudflare Workers from same codebase), five auth strategies, encrypted token storage. See `linear-mcp` for a production example: 15+ tools, GraphQL client, comprehensive metadata, full test coverage.
+A template for building MCP servers. Clone it, strip what you don't need, wire your API client, define tools. It's designed to be readable and easy to build on.
 
-## What is MCP
+Ships with dual-runtime support (Node.js and Cloudflare Workers from the same codebase), five auth strategies, encrypted token storage, and pretty much everything the latest MCP spec supports.
 
-Model Context Protocol is a JSON-RPC 2.0 wire protocol where servers expose typed capabilities (tools for actions, resources for data, prompts for templates) via discovery endpoints (tools/list, resources/list), and clients (IDEs, agents, chat apps) invoke them (tools/call, resources/read) based on LLM decisions — transported over Streamable HTTP with session state via Mcp-Session-Id. Neither side implements the other's logic: servers know nothing about which LLM uses them, clients know nothing about how tools work internally. This decoupling solves the N×M integration problem — one server serves any compliant client, one client consumes any compliant server.
+## What is MCP?
 
-## Supported Protocol Features
+Model Context Protocol is a JSON-RPC 2.0 wire protocol where servers expose typed capabilities (tools for actions, resources for data, prompts for templates) and clients (IDEs, agents, chat apps) invoke them based on LLM decisions.
+
+Neither side implements the other's logic: servers know nothing about which LLM uses them, clients know nothing about how tools work internally. This decoupling solves the N×M integration problem. One server serves any compliant client, one client consumes any compliant server.
+
+## What's supported?
 
 | Feature | Node.js | Workers | Notes |
 |---------|---------|---------|-------|
@@ -25,9 +29,9 @@ Model Context Protocol is a JSON-RPC 2.0 wire protocol where servers expose type
 
 Protocol versions supported: `2025-11-25`, `2025-06-18`, `2025-03-26`, `2024-11-05`.
 
-## Installation
+## Getting started
 
-**Generate encryption key (both runtimes):**
+**First, generate an encryption key (you'll need this for both runtimes):**
 ```bash
 openssl rand -base64 32 | tr -d '=' | tr '+/' '-_'
 ```
@@ -56,7 +60,7 @@ wrangler dev                  # Local: localhost:8787/mcp
 wrangler deploy               # Production: your-worker.workers.dev/mcp
 ```
 
-## Server Endpoints
+## Server endpoints
 
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
@@ -72,9 +76,9 @@ wrangler deploy               # Production: your-worker.workers.dev/mcp
 
 Discovery endpoints also available under `/mcp/.well-known/*` prefix.
 
-## Node Server and Cloudflare Workers
+## Node.js vs Cloudflare Workers
 
-The template produces two runtimes from the same codebase:
+The template produces two runtimes from the same codebase. Here's what you need to know:
 
 **Node.js (Hono + @hono/node-server)**
 - Entry: `src/index.ts`
@@ -90,7 +94,7 @@ The template produces two runtimes from the same codebase:
 - Request→response only; no server-initiated messages
 - Deploy: `wrangler deploy`
 
-**Shared code** lives in `src/shared/` — tools, storage interfaces, OAuth flow, utilities. Runtime-specific adapters in `src/adapters/http-hono/` and `src/adapters/http-workers/`.
+**Shared code** lives in `src/shared/` (tools, storage interfaces, OAuth flow, utilities). Runtime-specific adapters live in `src/adapters/http-hono/` and `src/adapters/http-workers/`.
 
 **When to use which:**
 - Node.js: Local development, full MCP features, self-hosted servers
@@ -98,7 +102,7 @@ The template produces two runtimes from the same codebase:
 
 ## Authorization
 
-### Naming Conventions (Important)
+### Naming conventions (important!)
 
 Use **generic `PROVIDER_*` names**, not service-specific names. This keeps the template portable and configuration consistent across all MCP servers.
 
@@ -109,7 +113,7 @@ Use **generic `PROVIDER_*` names**, not service-specific names. This keeps the t
 | `PROVIDER_ACCOUNTS_URL` | `SPOTIFY_ACCOUNTS_URL` |
 | `PROVIDER_API_URL` | `LINEAR_API_URL`, `GITHUB_API_URL` |
 
-**Why:**
+**Why?**
 - Same env var names work across all servers (Spotify, Linear, Gmail, etc.)
 - Deployment scripts don't need service-specific logic
 - `.env.example` and `wrangler.toml` remain generic templates
@@ -126,7 +130,7 @@ PROVIDER_API_URL=https://api.spotify.com             # optional, for API calls
 
 **Exception:** If a server integrates multiple providers simultaneously (rare), prefix with provider name: `GITHUB_CLIENT_ID`, `GITLAB_CLIENT_ID`. Single-provider servers should always use `PROVIDER_*`.
 
-### Auth Strategies
+### Auth strategies
 
 Five auth strategies, configured via `AUTH_STRATEGY` env var:
 
@@ -152,16 +156,16 @@ Five auth strategies, configured via `AUTH_STRATEGY` env var:
 
 ## Sessions
 
-Sessions enable multi-tenant operation — one server instance serves multiple users with isolated state. Both runtimes now use `SessionStore` for proper session management.
+Sessions enable multi-tenant operation. One server instance can serve multiple users with isolated state. Both runtimes use `SessionStore` for this.
 
-**What sessions provide:**
+**What sessions give you:**
 - API key → session binding (who owns this connection)
 - Session limits per API key (default: 5, LRU eviction)
 - Session validation on every request (404 for invalid/expired sessions)
 - Protocol version tracking per session
 - Server→client request routing (sampling/elicitation need to know which client)
 
-**What sessions do NOT provide (agent's responsibility):**
+**What sessions don't give you (that's on the agent):**
 - Conversation memory ("reply to that email")
 - Workflow state (draft continuation, last issue ID)
 - Context carryover between tool calls
@@ -197,7 +201,7 @@ User B (api_key_2) ──┼──▶ Single MCP Server ──▶ Provider API
 User C (api_key_3) ──┘
 ```
 
-## Adding Tools
+## Adding tools
 
 **Location:** `src/shared/tools/`
 
@@ -230,7 +234,6 @@ export const myTool = defineTool({
 });
 
 // 4. Add to sharedTools array in registry.ts
-// (uses internal asRegisteredTool helper for type-safe casting)
 export const sharedTools: RegisteredTool[] = [
   asRegisteredTool(healthTool),
   asRegisteredTool(echoTool),
@@ -240,13 +243,13 @@ export const sharedTools: RegisteredTool[] = [
 
 **Annotations** control how clients display/invoke: `readOnlyHint`, `destructiveHint`, `idempotentHint`, `openWorldHint`.
 
-**Services:** For complex integrations, put business logic in `src/shared/services/`. Extract when: handler exceeds ~30 lines, multiple tools share logic, or external API needs rate limiting/retries. Simple tools can keep logic inline. Example: `http-client.ts` provides rate-limited fetch; API-specific clients (e.g., `LinearApiClient`) would live alongside it.
+**Services:** For complex integrations, put business logic in `src/shared/services/`. Extract when: handler exceeds ~30 lines, multiple tools share logic, or external API needs rate limiting/retries. Simple tools can keep logic inline.
 
-## Known Limitations
+## Known limitations
 
-**Node.js runtime** — Full MCP support including server→client requests (sampling, elicitation, roots) via SDK's `StreamableHTTPServerTransport`. Sessions persist via `MemorySessionStore` (default) or `SqliteSessionStore` for disk persistence. Transport state survives within process lifetime.
+**Node.js runtime** — Full MCP support including server→client requests (sampling, elicitation, roots) via SDK's `StreamableHTTPServerTransport`. Sessions persist via `MemorySessionStore` (default) or `SqliteSessionStore` for disk persistence.
 
-**Cloudflare Workers runtime** — Request→response mode only. Sessions persist via `KvSessionStore` across requests, but transport state is stateless (no SSE streams). Server→client requests (sampling, elicitation, roots) unavailable because they require an active SSE stream which Workers can't maintain. Use Workers for simple tool servers; for full MCP features, use Node.js or implement Durable Objects.
+**Cloudflare Workers runtime** — Request→response mode only. Sessions persist via `KvSessionStore` across requests, but transport state is stateless (no SSE streams). Server→client requests (sampling, elicitation, roots) aren't available because they require an active SSE stream which Workers can't maintain. Use Workers for simple tool servers; for full MCP features, use Node.js or implement Durable Objects.
 
 ## License
 
