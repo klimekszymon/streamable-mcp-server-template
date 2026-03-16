@@ -19,7 +19,8 @@
     "format:check": "biome format .",
     "typecheck": "tsc --noEmit",
     "test": "bun test",
-    "test:client": "bun run scripts/test-client.ts"
+    "test:client": "bun run scripts/test-client.ts",
+    "mcp:inspector": "npx @modelcontextprotocol/inspector"
   },
   "keywords": [
     "mcp",
