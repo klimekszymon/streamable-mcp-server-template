@@ -111,3 +111,5 @@ sessions.db
 sessions.db-journal
 sessions.db-wal
 sessions.db-shm
+
+.data/

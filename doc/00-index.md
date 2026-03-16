@@ -17,6 +17,7 @@
 | [05-warstwa-storage.md](./05-warstwa-storage.md) | Interface pattern, trzy implementacje, AES-256-GCM | ~15 min |
 | [06-jak-dodac-tool.md](./06-jak-dodac-tool.md) | Praktyczny przewodnik — od zera do działającego narzędzia | ~20 min |
 | [07-pomysly-na-serwery-mcp.md](./07-pomysly-na-serwery-mcp.md) | Katalog integracji: 20+ pomysłów na serwery MCP z różnymi API | ~30 min |
+| [08-narzedzia-edukacyjne-mock.md](./08-narzedzia-edukacyjne-mock.md) | 12 narzędzi-mocków bez zewnętrznych usług: paginacja, dry run, polling, elicitation i inne wzorce MCP | ~25 min |
 
 ---
 
@@ -33,6 +34,8 @@ Jeśli już rozumiesz MCP i OAuth, zacznij od `04` (wzorce projektowe).
 Jeśli chcesz od razu coś zbudować, przeczytaj `01` i `06`.
 
 Jeśli szukasz pomysłów co zbudować i jakich API użyć, przejdź do `07`.
+
+Jeśli chcesz testować zachowanie agenta bez zewnętrznych usług, przejdź do `08`.
 
 ---
 
